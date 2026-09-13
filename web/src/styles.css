@@ -55,6 +55,10 @@ h2 { margin: 0; font-size: 20px; }
 .brand-name { font-weight: 700; letter-spacing: .2px; }
 .brand-sub { font-size: 12px; color: var(--ink-soft); }
 .topbar-right { display: flex; align-items: center; gap: 12px; }
+.user-name {
+  max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.menu-btn { display: none; }
 .icon-btn {
   border: 1px solid var(--line); background: #fff; border-radius: 9px;
   width: 34px; height: 34px; font-size: 15px;
@@ -273,13 +277,17 @@ code { background: #f0efe9; border-radius: 5px; padding: 1px 5px; font-size: 12.
 .progress > div { height: 100%; background: var(--brand); transition: width .3s; }
 .card-stage { display: grid; place-items: center; padding: 4px 0 22px; perspective: 1200px; }
 .flashcard {
-  width: min(560px, 92%); min-height: 280px; position: relative;
+  display: grid;
+  width: min(560px, 92%); min-height: 280px;
   transform-style: preserve-3d; transition: transform .4s cubic-bezier(.2, .7, .3, 1.1);
   cursor: pointer;
 }
 .flashcard.flipped { transform: rotateY(180deg); }
+/* Both faces share one grid cell, so the card grows to fit the longer side
+   instead of letting long text spill out of a fixed-height box. */
 .flashcard .face {
-  position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  position: relative; grid-area: 1 / 1;
+  backface-visibility: hidden; -webkit-backface-visibility: hidden;
   background: #fff; border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   padding: 30px 34px; text-align: center; min-height: 280px;
@@ -347,4 +355,79 @@ code { background: #f0efe9; border-radius: 5px; padding: 1px 5px; font-size: 12.
 .error-banner {
   background: #fdf0f0; border: 1px solid #f1c9c9; color: var(--danger);
   padding: 10px 14px; border-radius: 10px; margin-bottom: 14px; font-size: 13.5px; line-height: 1.5;
+}
+
+/* ------------------------------------------------------------------ mobile */
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+@media (max-width: 860px) {
+  /* the course tree becomes a drawer */
+  .menu-btn { display: grid; place-items: center; }
+  .topbar { gap: 10px; padding: 0 12px; }
+  .topbar .brand-sub { display: none; }
+  .user-name { display: none; }
+  .layout { position: relative; }
+  .sidebar {
+    position: fixed; top: 58px; bottom: 0; left: 0; z-index: 30;
+    width: min(86vw, 320px); transform: translateX(-102%);
+    transition: transform .22s ease; box-shadow: var(--shadow);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .scrim {
+    position: fixed; inset: 58px 0 0; z-index: 25;
+    background: rgba(31, 41, 55, .38); animation: scrim-in .18s ease;
+  }
+  @keyframes scrim-in { from { opacity: 0; } to { opacity: 1; } }
+
+  /* page rhythm, plus room for the home indicator */
+  .page { padding: 18px 16px calc(60px + env(safe-area-inset-bottom)); }
+  .page h1 { font-size: 22px; }
+  .page .sub { margin-bottom: 16px; }
+  .card { padding: 14px; border-radius: 10px; }
+
+  /* comfortable tap targets */
+  .btn, .btn-small { min-height: 40px; }
+  .btn { padding: 10px 14px; }
+  .btn-small { padding: 8px 12px; }
+  .icon-btn { width: 40px; height: 40px; font-size: 17px; }
+  .manual-row .rm { height: 44px; }
+  .row-card { padding: 12px 14px; }
+
+  /* iOS zooms the whole page when a focused field is under 16px */
+  .input, textarea.input, select.input { font-size: 16px; padding: 11px 12px; }
+
+  .stat-row .stat { padding: 12px 14px; }
+  .mini-stats { gap: 10px; font-size: 12.5px; }
+  .module-grid { grid-template-columns: 1fr; }
+
+  /* flashcards and verdicts */
+  .card-stage { padding: 2px 0 16px; }
+  .flashcard { width: 100%; min-height: 240px; }
+  .flashcard .face { min-height: 240px; padding: 26px 20px; }
+  .front-text { font-size: 27px; }
+  .back-text { font-size: 20px; }
+  .verdict-bar { gap: 8px; }
+  .verdict-btn { flex: 1 1 30%; padding: 12px 8px; font-size: 14px; }
+
+  /* modals read better as bottom sheets */
+  .modal-backdrop { padding: 0; align-items: end; }
+  .modal, .modal.wide { width: 100%; max-height: 92vh; border-radius: 16px 16px 0 0; }
+  .modal-body { padding: 14px; padding-bottom: calc(14px + env(safe-area-inset-bottom)); }
+
+  /* toasts span the width instead of hugging a corner */
+  .toast-root { left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); }
+  .toast { max-width: none; }
+}
+
+@media (max-width: 420px) {
+  .tree-module, .tree-chapter-head { padding-top: 8px; padding-bottom: 8px; }
+  .deck-top { gap: 8px; }
+}
+
+/* phone held sideways: keep the card usable */
+@media (max-height: 520px) and (max-width: 900px) {
+  .flashcard, .flashcard .face { min-height: 170px; }
+  .front-text { font-size: 22px; }
+  .back-text { font-size: 17px; }
+  .card-stage { padding-bottom: 12px; }
 }

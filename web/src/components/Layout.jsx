@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { NavLink, Outlet, useNavigate, useParams } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../auth.jsx";
 import { listChapters, listCourses } from "../data.js";
 
@@ -7,8 +7,24 @@ export default function Layout() {
   const { user, signOutUser } = useAuth();
   const navigate = useNavigate();
   const params = useParams();
+  const location = useLocation();
   const [courses, setCourses] = useState([]);
   const [chapters, setChapters] = useState({});
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // On phones the course tree is a drawer: any navigation closes it.
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    const onKey = (event) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [menuOpen]);
 
   useEffect(() => {
     let alive = true;
@@ -25,7 +41,7 @@ export default function Layout() {
   }, [user.uid, params.courseId, params.page]);
 
   const sidebar = (
-    <aside className="sidebar">
+    <aside id="course-nav" className={`sidebar${menuOpen ? " open" : ""}`}>
       <div className="sidebar-head">
         <h2>Courses</h2>
         <button type="button" className="btn btn-small" onClick={() => navigate("/courses?new=1")}>
@@ -69,6 +85,16 @@ export default function Layout() {
   return (
     <div className="app">
       <header className="topbar">
+        <button
+          type="button"
+          className="icon-btn menu-btn"
+          aria-label={menuOpen ? "Close navigation" : "Open navigation"}
+          aria-expanded={menuOpen}
+          aria-controls="course-nav"
+          onClick={() => setMenuOpen((open) => !open)}
+        >
+          {menuOpen ? "✕" : "☰"}
+        </button>
         <div className="brand">
           <div className="brand-mark">한</div>
           <div>
@@ -77,11 +103,14 @@ export default function Layout() {
           </div>
         </div>
         <div className="topbar-right">
-          <span className="text-soft">{user.displayName || user.email}</span>
+          <span className="text-soft user-name">{user.displayName || user.email}</span>
           <button type="button" className="btn btn-small" onClick={signOutUser}>Sign out</button>
         </div>
       </header>
       <div className="layout">
+        {menuOpen ? (
+          <div className="scrim" onClick={() => setMenuOpen(false)} aria-hidden="true" />
+        ) : null}
         {sidebar}
         <main className="workspace">
           <Outlet />
