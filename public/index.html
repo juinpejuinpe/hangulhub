@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HangulHub · Korean Exam Studio</title>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">한</span>
+      <div>
+        <div class="brand-name">HangulHub</div>
+        <div class="brand-sub">Korean exam studio</div>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button class="icon-btn" id="settings-btn" title="Settings" aria-label="Settings">⚙</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-head">
+        <h2>Courses</h2>
+        <button class="btn btn-small" id="add-course-btn">+ New course</button>
+      </div>
+      <nav id="course-tree" class="course-tree"></nav>
+    </aside>
+
+    <main id="workspace" class="workspace">
+      <div class="empty-state" id="welcome">
+        <div class="empty-icon">📚</div>
+        <h1>Welcome to HangulHub</h1>
+        <p>Create a course for the exam you're targeting, add chapters and study
+           files, then practise with flashcards, quizzes and mock papers.</p>
+        <button class="btn btn-primary" id="welcome-add-course">+ Create your first course</button>
+      </div>
+    </main>
+  </div>
+
+  <div id="modal-root"></div>
+  <div id="toast-root"></div>
+  <div id="busy-root" class="busy hidden">
+    <div class="busy-box">
+      <div class="spinner"></div>
+      <div id="busy-label">Working…</div>
+    </div>
+  </div>
+
+  <script src="/js/util.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/ui.js"></script>
+  <script src="/js/tree.js"></script>
+  <script src="/js/files.js"></script>
+  <script src="/js/flashcards.js"></script>
+  <script src="/js/exams.js"></script>
+  <script src="/js/chat.js"></script>
+  <script src="/js/views.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

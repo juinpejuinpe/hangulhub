@@ -1,0 +1,21 @@
+.venv/
+__pycache__/
+*.pyc
+data/
+.DS_Store
+.env
+.env.*
+!.env.example
+
+# never commit credentials
+serviceAccount*.json
+*service-account*.json
+*.pem
+
+# firebase / hosting tooling
+.firebase/
+firebase-debug.log*
+.firebaserc.local
+node_modules/
+
+*.log

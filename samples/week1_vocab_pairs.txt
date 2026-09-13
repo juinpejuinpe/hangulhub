@@ -1,0 +1,7 @@
+가족	family
+음식	food
+날씨	weather
+시간	time
+돈	money
+일하다	to work
+쉬다	to rest
