@@ -44,6 +44,11 @@ npm run dev                 # http://localhost:5173
 
 ## 4. Deploy to GitHub Pages
 
+> **Note:** GitHub Pages can't host this project if the account's user site has a
+> custom domain — GitHub redirects every project site under that account to it,
+> with no per-repository opt-out. In that case use a host that gives each project
+> its own domain (Vercel, Netlify, Cloudflare Pages) or Firebase Hosting.
+
 1. Add these repository secrets (**Settings → Secrets and variables → Actions**),
    using the same values as your `.env`:
 

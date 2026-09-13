@@ -20,4 +20,7 @@ node_modules/
 dist/
 .pnpm-store/
 
+# local-only notes, never published
+web/DEPLOY-VERCEL.md
+
 *.log

@@ -2,6 +2,12 @@ allowBuilds:
   '@firebase/util': true
   esbuild: true
   protobufjs: true
+# Same list for pnpm 10 and earlier, which read this key instead of allowBuilds.
+# Vercel picks its own pnpm version, so both spellings are kept here.
+onlyBuiltDependencies:
+  - esbuild
+  - '@firebase/util'
+  - protobufjs
 # Don't try to reinstall node_modules before every `pnpm run` command; without
 # this, running an offline build can stall retrying the registry.
 verifyDepsBeforeRun: false
