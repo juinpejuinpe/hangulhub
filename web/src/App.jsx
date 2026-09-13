@@ -1,4 +1,5 @@
 import { HashRouter, Navigate, Outlet, Route, Routes, useParams } from "react-router-dom";
+import { isAllowedEmail } from "./allowlist.js";
 import { useAuth } from "./auth.jsx";
 import Layout from "./components/Layout.jsx";
 import { ErrorBox, Spinner } from "./components/ui.jsx";
@@ -8,6 +9,7 @@ import Courses from "./pages/Courses.jsx";
 import DeckStudy from "./pages/DeckStudy.jsx";
 import Files from "./pages/Files.jsx";
 import Flashcards from "./pages/Flashcards.jsx";
+import NotAuthorised from "./pages/NotAuthorised.jsx";
 import SetupNotice from "./pages/SetupNotice.jsx";
 import SignIn from "./pages/SignIn.jsx";
 
@@ -15,10 +17,13 @@ import SignIn from "./pages/SignIn.jsx";
 // files and has no server-side rewrite rules.
 
 function Gate() {
-  const { configured, loading, user, error } = useAuth();
+  const { configured, loading, user, error, signOutUser } = useAuth();
   if (!configured) return <SetupNotice />;
   if (loading) return <div className="center-screen"><Spinner label="Loading HangulHub…" /></div>;
   if (!user) return <SignIn error={error} />;
+  if (!isAllowedEmail(user.email)) {
+    return <NotAuthorised email={user.email} onSwitch={signOutUser} />;
+  }
   return <Outlet />;
 }
 

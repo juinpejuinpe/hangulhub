@@ -3,13 +3,28 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Everything lives under the signed-in user's own document tree, so the
-    // rule is one line: you can only ever touch your own data.
+    // Only these accounts may touch anything. This runs server-side on every
+    // read and write, so someone who signs in with any other Google account —
+    // even using the public web config from the browser bundle — cannot read or
+    // write a single document.
+    //
+    // Keep this list in sync with web/src/allowlist.js (which only controls the
+    // message the user sees; this file is the actual enforcement).
+    function allowed() {
+      return request.auth != null
+        && request.auth.token.email != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.lower() in [
+             'sunsong1011@gmail.com',
+             'rlkl1421253088@gmail.com'
+           ];
+    }
+
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if allowed() && request.auth.uid == userId;
 
       match /{document=**} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if allowed() && request.auth.uid == userId;
       }
     }
 
