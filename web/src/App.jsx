@@ -4,14 +4,17 @@ import { useAuth } from "./auth.jsx";
 import Layout from "./components/Layout.jsx";
 import { ErrorBox, Spinner } from "./components/ui.jsx";
 import Chapter from "./pages/Chapter.jsx";
+import Chat from "./pages/Chat.jsx";
 import Course from "./pages/Course.jsx";
 import Courses from "./pages/Courses.jsx";
 import DeckStudy from "./pages/DeckStudy.jsx";
 import Files from "./pages/Files.jsx";
 import Flashcards from "./pages/Flashcards.jsx";
+import GenerateTest from "./pages/GenerateTest.jsx";
 import NotAuthorised from "./pages/NotAuthorised.jsx";
 import SetupNotice from "./pages/SetupNotice.jsx";
 import SignIn from "./pages/SignIn.jsx";
+import TestRunner from "./pages/TestRunner.jsx";
 
 // HashRouter keeps deep links working on GitHub Pages, which serves static
 // files and has no server-side rewrite rules.
@@ -68,6 +71,15 @@ export default function App() {
               element={<CourseBoundary><Flashcards /></CourseBoundary>}
             />
             <Route path="/deck/:deckId" element={<DeckStudy />} />
+            <Route
+              path="/c/:courseId/ch/:chapterId/test/:kind"
+              element={<CourseBoundary><GenerateTest /></CourseBoundary>}
+            />
+            <Route
+              path="/c/:courseId/ch/:chapterId/chat"
+              element={<CourseBoundary><Chat /></CourseBoundary>}
+            />
+            <Route path="/test/:testId" element={<TestRunner />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Route>

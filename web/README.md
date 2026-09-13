@@ -103,10 +103,33 @@ rewrite configuration.
   plus pasted text, with previews
 - Flashcards: write your own cards, build a deck from a file, edit any deck, and
   study with random order, familiarity tracking and progress saved to Firestore
+- **AI Multiple Choice** — a quiz from your files, or general grammar at the
+  course's target level; graded instantly in the browser, with explanations
+- **Paper → Online Test** — converts an uploaded past paper into an interactive
+  test that keeps the paper's real sections and question counts
+- **AI Mock Paper** — a brand-new paper modelled on your past papers
+- **Ask AI** — chapter-scoped tutor chat, with history saved per chapter
 
-## Not ported yet
+## AI setup
 
-- AI features (multiple choice, paper → online test, mock papers, Ask AI)
+Click the **⚙** in the top bar and paste a DeepSeek API key. The key is kept in
+this browser's `localStorage` — it is never bundled with the app, never written
+to Firestore, and never committed. "Test connection" checks it before you rely
+on it.
+
+DeepSeek's API accepts browser requests directly (its CORS preflight echoes the
+requesting origin and allows the `authorization` header), so no backend or proxy
+is needed. Verified end to end: a request from the deployed origin reaches the
+API and comes back with the provider's own error or answer.
+
+If you would rather not hold a key in the browser, point **Base URL** at a small
+proxy of your own — the client only ever posts to `<base>/chat/completions`.
+
+## Still missing
+
+- **Official TOPIK paper import** (the local app's `topik_import.py`). This one
+  cannot work in the browser: `topik.go.kr` refuses cross-origin requests, so it
+  needs a serverless function to fetch the papers.
 
 ### Notes on the importers
 
@@ -118,11 +141,3 @@ rewrite configuration.
 - Content is stored in the Firestore document, which caps at 1 MB. A very long
   PDF's text is rejected with a clear message rather than failing halfway;
   split it into two files.
-
-### AI features
-
-DeepSeek's API sends permissive CORS headers (verified: its preflight echoes the
-requesting origin and allows the `authorization` header), so the browser can call
-it directly and no backend is required. That means the API key is entered in the
-app and kept in the browser, never in the bundle or the repository — the same
-arrangement as the local app's `data/settings.json`, just per-device.

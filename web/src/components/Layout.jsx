@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
+import { hasApiKey } from "../ai.js";
 import { useAuth } from "../auth.jsx";
 import { listChapters, listCourses } from "../data.js";
+import AiSettings from "./AiSettings.jsx";
 
 export default function Layout() {
   const { user, signOutUser } = useAuth();
@@ -11,6 +13,8 @@ export default function Layout() {
   const [courses, setCourses] = useState([]);
   const [chapters, setChapters] = useState({});
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showAiSettings, setShowAiSettings] = useState(false);
+  const [aiReady, setAiReady] = useState(hasApiKey());
 
   // On phones the course tree is a drawer: any navigation closes it.
   useEffect(() => {
@@ -71,6 +75,18 @@ export default function Layout() {
                       <NavLink className="tree-module" to={`/c/${course.id}/ch/${chapter.id}/flashcards`}>
                         🃏 Flashcards
                       </NavLink>
+                      <NavLink className="tree-module" to={`/c/${course.id}/ch/${chapter.id}/test/mcq`}>
+                        ❓ Multiple choice
+                      </NavLink>
+                      <NavLink className="tree-module" to={`/c/${course.id}/ch/${chapter.id}/test/paper`}>
+                        📝 Paper → test
+                      </NavLink>
+                      <NavLink className="tree-module" to={`/c/${course.id}/ch/${chapter.id}/test/mock`}>
+                        📄 Mock paper
+                      </NavLink>
+                      <NavLink className="tree-module" to={`/c/${course.id}/ch/${chapter.id}/chat`}>
+                        💬 Ask AI
+                      </NavLink>
                     </div>
                   </div>
                 ))}
@@ -104,9 +120,26 @@ export default function Layout() {
         </div>
         <div className="topbar-right">
           <span className="text-soft user-name">{user.displayName || user.email}</span>
+          <button
+            type="button"
+            className={`icon-btn${aiReady ? "" : " needs-key"}`}
+            title={aiReady ? "AI settings" : "Add your DeepSeek API key"}
+            aria-label="AI settings"
+            onClick={() => setShowAiSettings(true)}
+          >
+            ⚙
+          </button>
           <button type="button" className="btn btn-small" onClick={signOutUser}>Sign out</button>
         </div>
       </header>
+      {showAiSettings ? (
+        <AiSettings
+          onClose={() => {
+            setShowAiSettings(false);
+            setAiReady(hasApiKey());
+          }}
+        />
+      ) : null}
       <div className="layout">
         {menuOpen ? (
           <div className="scrim" onClick={() => setMenuOpen(false)} aria-hidden="true" />

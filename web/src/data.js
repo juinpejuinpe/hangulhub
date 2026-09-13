@@ -16,6 +16,7 @@ import {
   getDocs,
   query,
   serverTimestamp,
+  setDoc,
   updateDoc,
   where,
   writeBatch,
@@ -43,6 +44,10 @@ const filesCol = (uid) => collection(db, "users", uid, "files");
 const fileRef = (uid, id) => doc(filesCol(uid), id);
 const decksCol = (uid) => collection(db, "users", uid, "decks");
 const deckRef = (uid, id) => doc(decksCol(uid), id);
+const testsCol = (uid) => collection(db, "users", uid, "tests");
+const testRef = (uid, id) => doc(testsCol(uid), id);
+const chatsCol = (uid) => collection(db, "users", uid, "chats");
+const chatRef = (uid, chapterId) => doc(chatsCol(uid), chapterId);
 
 async function deleteAll(refs) {
   for (let i = 0; i < refs.length; i += 400) {
@@ -240,6 +245,63 @@ export async function relearnDeck(uid, deck) {
   const fresh = resetStudy(deck);
   await saveDeck(uid, { ...deck, ...fresh });
   return { ...deck, ...fresh };
+}
+
+/* ------------------------------------------------------------------- tests */
+
+export async function listTests(uid, courseId, chapterId = null) {
+  const clauses = [where("courseId", "==", courseId)];
+  if (chapterId) clauses.push(where("chapterId", "==", chapterId));
+  const snap = await getDocs(query(testsCol(uid), ...clauses));
+  return snap.docs.map(withId).sort((a, b) => timeOf(b.createdAt) - timeOf(a.createdAt));
+}
+
+export async function getTest(uid, testId) {
+  const snap = await getDoc(testRef(uid, testId));
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+}
+
+export async function createTest(uid, { kind, courseId, chapterId, files, title, prompt, target, content }) {
+  const ref = await addDoc(testsCol(uid), {
+    kind,
+    courseId,
+    chapterId: chapterId || "",
+    fileIds: (files || []).map((file) => file.id),
+    fileNames: Object.fromEntries((files || []).map((file) => [file.id, file.name])),
+    title: title || content?.title || "Untitled test",
+    prompt: prompt || "",
+    target: target || "",
+    content,
+    attempts: [],
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  return ref.id;
+}
+
+export async function addAttempt(uid, test, attempt) {
+  const attempts = [...(test.attempts || []), attempt];
+  await updateDoc(testRef(uid, test.id), { attempts, updatedAt: serverTimestamp() });
+  return attempts;
+}
+
+export async function deleteTest(uid, testId) {
+  await deleteDoc(testRef(uid, testId));
+}
+
+/* -------------------------------------------------------------------- chat */
+
+export async function getChat(uid, chapterId) {
+  const snap = await getDoc(chatRef(uid, chapterId));
+  return snap.exists() ? snap.data() : { messages: [] };
+}
+
+export async function saveChat(uid, chapterId, messages) {
+  await setDoc(
+    chatRef(uid, chapterId),
+    { messages, updatedAt: serverTimestamp() },
+    { merge: true }
+  );
 }
 
 /* ------------------------------------------------------------------ helpers */

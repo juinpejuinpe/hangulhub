@@ -360,6 +360,56 @@ code { background: #f0efe9; border-radius: 5px; padding: 1px 5px; font-size: 12.
 /* ------------------------------------------------------------------ mobile */
 .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
+/* ------------------------------------------------------------- ai + tests */
+.field .hint { color: var(--ink-soft); font-size: 12.5px; margin-top: 5px; line-height: 1.45; }
+.picker-actions { display: flex; gap: 4px; margin-top: 8px; }
+.icon-btn.needs-key { border-color: var(--warn); color: var(--warn); }
+.toolbar { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.ok-banner {
+  background: var(--brand-soft); border: 1px solid #cfe5d9; color: var(--brand-dark);
+  padding: 10px 14px; border-radius: 10px; margin-bottom: 14px; font-size: 13.5px;
+}
+
+.section-block {
+  border: 1px solid var(--line); border-radius: var(--radius); background: #fff;
+  margin-bottom: 18px; overflow: hidden;
+}
+.section-head { background: #fbfaf7; padding: 13px 18px; border-bottom: 1px solid var(--line); }
+.section-head h3 { margin: 0; font-size: 16px; }
+.section-head .marks { color: var(--ink-soft); font-size: 12.5px; margin-top: 3px; line-height: 1.5; }
+.q-item { padding: 16px 18px; border-top: 1px solid #f0ede6; }
+.q-item:first-child { border-top: 0; }
+.q-prompt { font-size: 15.5px; line-height: 1.6; white-space: pre-line; }
+.q-meta { display: flex; gap: 12px; flex-wrap: wrap; color: var(--ink-soft); font-size: 12px; margin: 7px 0 10px; }
+.mc-options { display: flex; flex-direction: column; gap: 8px; }
+.mc-option {
+  display: flex; gap: 9px; align-items: flex-start; border: 1px solid var(--line);
+  border-radius: 10px; padding: 10px 12px; cursor: pointer; background: #fff;
+}
+.mc-option:hover { background: #fbfaf7; }
+.mc-option.selected { border-color: var(--brand); background: var(--brand-soft); }
+.mc-option input { margin-top: 3px; accent-color: var(--brand); }
+.mc-option .letter { font-weight: 700; color: var(--ink-soft); }
+.answer-box textarea, .q-item textarea { min-height: 80px; }
+.answer-line { font-size: 13.5px; line-height: 1.55; margin-top: 5px; }
+.q-item.result { border-left: 3px solid var(--line); }
+.q-item.result.good { border-left-color: var(--ok); }
+.q-item.result.bad { border-left-color: var(--danger); }
+.score-card { text-align: center; }
+.score-big { font-size: 40px; font-weight: 750; }
+.score-big span { font-size: 20px; font-weight: 500; color: var(--ink-soft); }
+
+/* chat */
+.chat-log { max-height: 56vh; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+.chat-msg { display: flex; flex-direction: column; gap: 3px; }
+.chat-role { font-size: 11.5px; text-transform: uppercase; letter-spacing: .5px; color: var(--ink-soft); }
+.chat-body { white-space: pre-wrap; line-height: 1.6; }
+.chat-msg.user .chat-body {
+  background: var(--brand-soft); border-radius: 10px; padding: 9px 12px; align-self: flex-start;
+}
+.chat-input-row { display: flex; gap: 8px; align-items: flex-start; }
+.chat-input-row textarea { flex: 1; min-height: 52px; }
+
 @media (max-width: 860px) {
   /* the course tree becomes a drawer */
   .menu-btn { display: grid; place-items: center; }

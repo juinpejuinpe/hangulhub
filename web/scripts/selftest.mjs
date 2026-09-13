@@ -3,6 +3,14 @@
 
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import {
+  fileText,
+  flattenQuestions,
+  gradeMcq,
+  normalizeContent,
+  normalizeMcq,
+  totalMarks,
+} from "../src/ai.js";
 import { ALLOWED_EMAILS, isAllowedEmail } from "../src/allowlist.js";
 import {
   applyAnswer,
@@ -146,7 +154,75 @@ check("rows to pairs joins the back columns", () => {
 });
 
 check("unsupported file types fail loudly", () => {
-  assert.throws(() => parseTextFile("deck.xlsx", "x"), /(not|aren't) supported/i);
+  assert.throws(() => parseTextFile("deck.xlsx", "x"), /can't be read from text/i);
+});
+
+console.log("ai.js");
+
+check("generated MCQ answers are normalised to an option index", () => {
+  const content = normalizeMcq({
+    questions: [
+      { prompt: "밥을 ____ 먹어요.", options: ["먹다", "먹어요"], answer_index: "B", explanation: "why" },
+      { prompt: "둘", options: ["가", "나", "다", "라"], answer_index: 3 },
+    ],
+  });
+  const questions = flattenQuestions(content);
+  assert.equal(questions.length, 2);
+  assert.equal(questions[0].options.length, 4, "short option lists are padded to four");
+  assert.equal(questions[0].answer, 1, "'B' becomes index 1");
+  assert.equal(questions[1].answer, 3);
+  assert.notEqual(questions[0].id, questions[1].id);
+});
+
+check("paper content keeps section structure, types and marks", () => {
+  const content = normalizeContent({
+    title: "TOPIK I mock",
+    instructions: "Answer all questions.",
+    sections: [
+      {
+        title: "Reading",
+        marks: 20,
+        questions: [
+          { type: "mc", prompt: "Q1", options: ["a", "b", "c", "d"], answer: "C", marks: 2 },
+          { type: "writing", prompt: "Q2", answer: "marking guide", marks: 10 },
+        ],
+      },
+      { title: "Empty", questions: [] },
+    ],
+  });
+  assert.equal(content.title, "TOPIK I mock");
+  assert.equal(content.sections.length, 1, "sections with no questions are dropped");
+  assert.equal(content.sections[0].questions[0].answer, 2, "'C' becomes index 2");
+  assert.equal(content.sections[0].questions[1].type, "writing");
+  assert.equal(content.sections[0].questions[1].marks, 10);
+  assert.equal(totalMarks(content), 12);
+});
+
+check("multiple choice grading is local and correct", () => {
+  const content = normalizeMcq({
+    questions: [
+      { prompt: "one", options: ["a", "b", "c", "d"], answer_index: 0 },
+      { prompt: "two", options: ["a", "b", "c", "d"], answer_index: 2 },
+    ],
+  });
+  const [first, second] = flattenQuestions(content);
+  const result = gradeMcq(content, { [first.id]: "0", [second.id]: "1" });
+  assert.equal(result.score, 1);
+  assert.equal(result.maxScore, 2);
+  assert.equal(result.questions[0].score, 1);
+  assert.equal(result.questions[1].score, 0);
+  assert.equal(result.questions[1].correctAnswer, "C");
+});
+
+check("file text is exposed to the AI as tab-separated rows", () => {
+  const text = fileText({
+    content: {
+      kind: "table",
+      headers: ["Korean", "English"],
+      rows: [{ Korean: "학교", English: "school" }],
+    },
+  });
+  assert.equal(text, "Korean\tEnglish\n학교\tschool");
 });
 
 console.log(`\n${checks} checks passed.`);

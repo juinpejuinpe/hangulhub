@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>HangulHub AI harness</title>
+    <!--
+      Scratch page for checking the DeepSeek round trip from a browser without
+      signing in. Not part of the build — open it with `pnpm dev`.
+    -->
+    <style>
+      body { font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 20px; }
+      pre { background: #f7f6f2; border: 1px solid #e7e4dd; border-radius: 8px; padding: 12px; white-space: pre-wrap; }
+    </style>
+  </head>
+  <body>
+    <h1>AI harness</h1>
+    <p>Sets a deliberately invalid key, so a clean provider error proves the request actually reached DeepSeek.</p>
+    <button id="ping">Run ping</button>
+    <pre id="out">idle</pre>
+    <script type="module">
+      import { pingModel, saveAiSettings } from "/src/ai.js";
+
+      document.getElementById("ping").addEventListener("click", async () => {
+        const out = document.getElementById("out");
+        saveAiSettings({ apiKey: "sk-not-a-real-key", baseUrl: "https://api.deepseek.com/v1" });
+        out.textContent = "calling DeepSeek…";
+        const started = performance.now();
+        try {
+          out.textContent = `REPLY: ${await pingModel()}`;
+        } catch (err) {
+          out.textContent = `ERROR after ${Math.round(performance.now() - started)}ms\n${err.message}`;
+        }
+      });
+    </script>
+  </body>
+</html>
