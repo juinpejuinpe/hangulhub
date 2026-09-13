@@ -684,5 +684,7 @@ def test_settings():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "8765"))
-    print(f"HangulHub running at http://127.0.0.1:{port}")
-    app.run(host="127.0.0.1", port=port, debug=False, threaded=True)
+    # Local runs stay on loopback; containers (Cloud Run etc.) set HOST=0.0.0.0.
+    host = os.environ.get("HOST", "127.0.0.1")
+    print(f"HangulHub running at http://{host}:{port}")
+    app.run(host=host, port=port, debug=False, threaded=True)
