@@ -17,5 +17,7 @@ serviceAccount*.json
 firebase-debug.log*
 .firebaserc.local
 node_modules/
+dist/
+.pnpm-store/
 
 *.log

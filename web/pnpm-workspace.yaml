@@ -1,0 +1,7 @@
+allowBuilds:
+  '@firebase/util': true
+  esbuild: true
+  protobufjs: true
+# Don't try to reinstall node_modules before every `pnpm run` command; without
+# this, running an offline build can stall retrying the registry.
+verifyDepsBeforeRun: false

@@ -4,6 +4,16 @@ A locally hosted study app for Korean (or any language exam) that replaces a
 buggy flashcard app plus a general-purpose notebook tool. Organise material as
 **courses → chapters → files**, then use each function on the files you choose.
 
+## Two versions
+
+| Version | Runs on | Data lives in | Use it when |
+| --- | --- | --- | --- |
+| **Local app** (this folder) | Python + Flask on your machine | `data/` JSON files | You want everything offline, plus the AI features |
+| **Web app** (`web/`) | Static React on GitHub Pages | Firebase Firestore (per Google account) | You want it on your phone from anywhere, with no server |
+
+The local app has the AI features; the web app has sign-in and cloud sync. See
+[`web/README.md`](web/README.md) for the Firebase setup.
+
 ## Run it
 
 ```sh
