@@ -2,6 +2,8 @@
 // Run with: npm test   (or: node scripts/selftest.mjs)
 
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { ALLOWED_EMAILS, isAllowedEmail } from "../src/allowlist.js";
 import {
   applyAnswer,
   currentCard,
@@ -26,6 +28,22 @@ function check(name, fn) {
 }
 
 console.log("study.js");
+
+check("only the configured accounts pass the client allow-list", () => {
+  assert.equal(isAllowedEmail("sunsong1011@gmail.com"), true);
+  assert.equal(isAllowedEmail("  SUNSONG1011@GMAIL.COM "), true);
+  assert.equal(isAllowedEmail("rlkl1421253088@gmail.com"), true);
+  assert.equal(isAllowedEmail("someone.else@gmail.com"), false);
+  assert.equal(isAllowedEmail(""), false);
+  assert.equal(isAllowedEmail(undefined), false);
+});
+
+check("firestore.rules allows exactly the same accounts", () => {
+  const rules = readFileSync(new URL("../firestore.rules", import.meta.url), "utf8");
+  const block = rules.slice(rules.indexOf("email.lower() in ["));
+  const listed = [...block.slice(0, block.indexOf("]")).matchAll(/'([^']+)'/g)].map((m) => m[1]);
+  assert.deepEqual(listed.sort(), [...ALLOWED_EMAILS].sort());
+});
 
 check("shuffle keeps every item", () => {
   const items = [1, 2, 3, 4, 5];

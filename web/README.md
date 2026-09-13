@@ -12,6 +12,37 @@ server-side things the browser can't do alone:
 
 Firestore security rules mean each account can only read and write its own data.
 
+## Who can use it
+
+Only these accounts, listed in `web/src/allowlist.js`:
+
+- `sunsong1011@gmail.com`
+- `rlkl1421253088@gmail.com`
+
+The real enforcement is the email check at the top of `web/firestore.rules`; the
+client-side list only decides which message is shown, so anyone else signing in
+gets an explanation instead of a screen of permission errors. To add or remove an
+account, edit **both** files and then:
+
+```sh
+pnpm dlx firebase-tools deploy --only firestore:rules   # the enforcement
+git push                                                # the message
+```
+
+`npm test` fails if the two lists ever drift apart.
+
+Related protections already in place:
+
+- Only the **Google** provider is enabled under Authentication, so nobody can
+  self-register with an email/password account.
+- Email enumeration protection is on, so the sign-in flow won't reveal which
+  addresses exist.
+- The deployed bundle contains the Firebase web config, which is public by
+  design — it holds no third-party API keys (the DeepSeek key lives only in the
+  local Flask app's `data/settings.json`, which is gitignored). Anyone who copies
+  the config out of the bundle still can't read or write data, because the rules
+  above reject them.
+
 ## 1. Create the Firebase project
 
 1. <https://console.firebase.google.com> → **Add project**.
