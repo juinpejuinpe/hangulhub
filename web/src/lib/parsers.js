@@ -1,10 +1,25 @@
-// Ported from the Flask app's parsing.py. Phase 1 handles the formats that need
-// no third-party libraries: .txt .md .csv .tsv plus pasted text.
+// Ported from the Flask app's parsing.py: .txt .md .csv .tsv directly, and
+// .xlsx / .docx / .pdf through libraries that are imported on demand, so the
+// initial bundle stays small on a phone.
 
 const MAX_CELL = 2000;
 const MAX_ROWS = 20000;
 
-export const SUPPORTED_EXTENSIONS = ["txt", "md", "csv", "tsv"];
+export const SUPPORTED_EXTENSIONS = ["txt", "md", "csv", "tsv", "xlsx", "docx", "pdf"];
+
+let pdfjsPromise = null;
+
+async function loadPdfjs() {
+  if (!pdfjsPromise) {
+    pdfjsPromise = (async () => {
+      const pdfjs = await import("pdfjs-dist");
+      const worker = await import("pdfjs-dist/build/pdf.worker.min.mjs?url");
+      pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
+      return pdfjs;
+    })();
+  }
+  return pdfjsPromise;
+}
 
 export function cleanText(value) {
   return String(value ?? "").replace(/\s+/g, " ").trim();
@@ -21,8 +36,75 @@ export function parseTextFile(name, text) {
   if (ext === "tsv") return tableFromRows(parseDelimited(text, "\t"));
   if (ext === "txt" || ext === "md") return textFromText(text);
   throw new Error(
-    `.${ext || "?"} files aren't supported in the web app yet. Use .txt, .md, .csv or .tsv for now.`
+    `.${ext || "?"} files can't be read from text — upload the file itself instead.`
   );
+}
+
+/** Parse an uploaded File of any supported type. */
+export async function parseFile(file) {
+  const ext = fileExtension(file.name);
+  if (ext === "xlsx" || ext === "xlsm") return parseXlsx(await file.arrayBuffer());
+  if (ext === "xls") throw new Error("Old .xls files aren't supported — save as .xlsx first.");
+  if (ext === "docx") return parseDocx(await file.arrayBuffer());
+  if (ext === "pdf") return parsePdf(new Uint8Array(await file.arrayBuffer()));
+  if (["txt", "md", "csv", "tsv"].includes(ext)) return parseTextFile(file.name, await file.text());
+  throw new Error(
+    `Unsupported file type .${ext || "?"}. Supported: ${SUPPORTED_EXTENSIONS.map((e) => `.${e}`).join(" ")}`
+  );
+}
+
+export async function parseXlsx(arrayBuffer) {
+  const imported = await import("xlsx");
+  const XLSX = imported.default || imported;
+  const workbook = XLSX.read(arrayBuffer, { type: "array" });
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  if (!sheet) throw new Error("That workbook has no sheets.");
+  const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: "" });
+  const nonEmpty = rows.filter((row) => row.some((cell) => String(cell).trim()));
+  return tableFromRows(nonEmpty.slice(0, MAX_ROWS));
+}
+
+export async function parseDocx(arrayBuffer) {
+  const imported = await import("mammoth/mammoth.browser");
+  const mammoth = imported.default || imported;
+  const { value } = await mammoth.extractRawText({ arrayBuffer });
+  return textFromText(value);
+}
+
+export async function parsePdf(bytes) {
+  const pdfjs = await loadPdfjs();
+  const document = await pdfjs.getDocument({ data: bytes }).promise;
+  const pageTexts = [];
+
+  for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
+    const page = await document.getPage(pageNumber);
+    const content = await page.getTextContent();
+    let line = "";
+    const lines = [];
+    for (const item of content.items) {
+      if (typeof item.str !== "string") continue;
+      line += item.str;
+      if (item.hasEOL) {
+        lines.push(line);
+        line = "";
+      } else if (item.str && !item.str.endsWith(" ")) {
+        line += " ";
+      }
+    }
+    if (line.trim()) lines.push(line);
+    const text = lines.map((l) => l.replace(/\s+/g, " ").trim()).filter(Boolean).join("\n");
+    if (text) pageTexts.push(text);
+  }
+
+  const text = pageTexts.join("\n\n");
+  if (!text.trim()) {
+    throw new Error(
+      "No extractable text in this PDF — it's probably a scan of a printed page. " +
+        "Run it through OCR (or use a digital copy) and try again."
+    );
+  }
+  const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  return { kind: "text", text, lines: lines.slice(0, MAX_ROWS), pages: pageTexts.length };
 }
 
 export function textFromText(text) {

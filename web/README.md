@@ -99,15 +99,30 @@ rewrite configuration.
 
 - Google sign-in, with data isolated per account by security rules
 - Courses → chapters → files
-- File import for `.txt`, `.md`, `.csv`, `.tsv` plus pasted text, with previews
+- File import for `.txt`, `.md`, `.csv`, `.tsv`, `.xlsx`, `.docx` and `.pdf`,
+  plus pasted text, with previews
 - Flashcards: write your own cards, build a deck from a file, edit any deck, and
   study with random order, familiarity tracking and progress saved to Firestore
 
 ## Not ported yet
 
-- `.xlsx`, `.docx` and `.pdf` import (needs SheetJS / mammoth / pdf.js in the browser)
 - AI features (multiple choice, paper → online test, mock papers, Ask AI)
 
-For AI in a static app the API key would live in the browser, which anyone can
-read. The options are a small Cloud Function proxy, or accepting the risk on a
-single-user deployment with a low-limit key.
+### Notes on the importers
+
+- Parsing happens entirely in the browser: SheetJS for `.xlsx`, mammoth for
+  `.docx`, and pdf.js for `.pdf`. Each library is code-split, so a phone only
+  downloads the one it needs, when a file of that type is chosen.
+- Scanned image PDFs have no text layer, so there is nothing to extract — they
+  need OCR first. The local Flask app has the same limitation.
+- Content is stored in the Firestore document, which caps at 1 MB. A very long
+  PDF's text is rejected with a clear message rather than failing halfway;
+  split it into two files.
+
+### AI features
+
+DeepSeek's API sends permissive CORS headers (verified: its preflight echoes the
+requesting origin and allows the `authorization` header), so the browser can call
+it directly and no backend is required. That means the API key is entered in the
+app and kept in the browser, never in the bundle or the repository — the same
+arrangement as the local app's `data/settings.json`, just per-device.

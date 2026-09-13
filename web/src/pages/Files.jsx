@@ -4,7 +4,10 @@ import { useAuth } from "../auth.jsx";
 import { ErrorBox, formatDate, Spinner, useToast } from "../components/ui.jsx";
 import { addFile, deleteFile, getCourse, listChapters, listFiles } from "../data.js";
 import { useAsync } from "../hooks.js";
-import { fileExtension, parseTextFile, SUPPORTED_EXTENSIONS } from "../lib/parsers.js";
+import { fileExtension, parseFile, parseTextFile, SUPPORTED_EXTENSIONS } from "../lib/parsers.js";
+
+// Firestore documents cap at 1 MB; leave room for the other fields.
+const MAX_CONTENT_BYTES = 900_000;
 
 export default function Files() {
   const { courseId, chapterId } = useParams();
@@ -13,6 +16,7 @@ export default function Files() {
   const [pasteName, setPasteName] = useState("");
   const [pasteText, setPasteText] = useState("");
   const [busy, setBusy] = useState(false);
+  const [busyLabel, setBusyLabel] = useState("");
 
   const { data, loading, error, reload } = useAsync(
     async () => {
@@ -26,46 +30,59 @@ export default function Files() {
     [user.uid, courseId, chapterId]
   );
 
-  async function save(name, text) {
-    setBusy(true);
-    try {
-      const ext = fileExtension(name) || "txt";
-      const content = parseTextFile(name, text);
-      await addFile(user.uid, {
-        courseId,
-        chapterId,
-        name,
-        ext,
-        kind: content.kind,
-        content,
-      });
-      toast(`Added ${name}.`);
-      await reload();
-      return true;
-    } catch (err) {
-      toast(err.message, "error");
-      return false;
-    } finally {
-      setBusy(false);
+  async function saveParsed(name, content, size) {
+    const bytes = JSON.stringify(content).length;
+    if (bytes > MAX_CONTENT_BYTES) {
+      throw new Error(
+        `${name} holds too much text to store (${Math.round(bytes / 1000)} KB). ` +
+          "Split it into smaller files."
+      );
     }
+    await addFile(user.uid, {
+      courseId,
+      chapterId,
+      name,
+      ext: fileExtension(name),
+      kind: content.kind,
+      size: size || 0,
+      content,
+    });
+    const summary =
+      content.kind === "table" ? `${content.rows.length} rows` : `${content.lines.length} lines`;
+    toast(`Added ${name} — ${summary}.`);
+    await reload();
   }
 
   async function onUpload(event) {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
-    const text = await file.text();
-    await save(file.name, text);
+    setBusy(true);
+    setBusyLabel(`Reading ${file.name}…`);
+    try {
+      await saveParsed(file.name, await parseFile(file), file.size);
+    } catch (err) {
+      toast(err.message, "error");
+    } finally {
+      setBusy(false);
+      setBusyLabel("");
+    }
   }
 
   async function onPaste(event) {
     event.preventDefault();
     if (!pasteText.trim()) return;
     const name = pasteName.trim() || "pasted text";
-    const ok = await save(name.includes(".") ? name : `${name}.txt`, pasteText);
-    if (ok) {
+    const fullName = name.includes(".") ? name : `${name}.txt`;
+    setBusy(true);
+    try {
+      await saveParsed(fullName, parseTextFile(fullName, pasteText));
       setPasteName("");
       setPasteText("");
+    } catch (err) {
+      toast(err.message, "error");
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -101,13 +118,18 @@ export default function Files() {
         <label className="dropzone">
           <input
             type="file"
-            accept=".txt,.md,.csv,.tsv"
+            accept=".txt,.md,.csv,.tsv,.xlsx,.xlsm,.docx,.pdf"
             onChange={onUpload}
             disabled={busy}
           />
-          <div className="dz-big">Choose a file</div>
+          <div className="dz-big">{busyLabel || "Choose a file"}</div>
           <div className="text-soft">
-            A vocab list like <code>학교, school</code> per line becomes flashcards later.
+            Vocabulary lists, past papers and notes:{" "}
+            {SUPPORTED_EXTENSIONS.map((ext) => `.${ext}`).join(", ")}. A list like{" "}
+            <code>학교, school</code> per line becomes flashcards later.
+          </div>
+          <div className="text-soft tiny" style={{ marginTop: 6 }}>
+            Scanned image PDFs have no text layer and need OCR first.
           </div>
         </label>
       </div>

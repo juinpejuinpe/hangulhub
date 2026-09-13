@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>HangulHub parser harness</title>
+    <!--
+      Scratch page for checking the import parsers against real files without
+      signing in. Not part of the build — open it with `pnpm dev`.
+    -->
+    <style>
+      body { font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 20px; }
+      pre { background: #f7f6f2; border: 1px solid #e7e4dd; border-radius: 8px; padding: 12px; white-space: pre-wrap; }
+    </style>
+  </head>
+  <body>
+    <h1>Parser harness</h1>
+    <input type="file" id="file" />
+    <pre id="out">Choose a file…</pre>
+    <script type="module">
+      import { parseFile, textToPairs } from "/src/lib/parsers.js";
+
+      const input = document.getElementById("file");
+      const out = document.getElementById("out");
+
+      input.addEventListener("change", async () => {
+        const file = input.files[0];
+        if (!file) return;
+        out.textContent = `parsing ${file.name}…`;
+        const started = performance.now();
+        try {
+          const content = await parseFile(file);
+          const pairs = content.kind === "table" ? [] : textToPairs(content);
+          out.textContent = JSON.stringify(
+            {
+              name: file.name,
+              kind: content.kind,
+              rows: content.rows?.length ?? null,
+              headers: content.headers ?? null,
+              lines: content.lines?.length ?? null,
+              pages: content.pages ?? null,
+              chars: content.text?.length ?? null,
+              pairsDetected: pairs.length,
+              firstRows: content.rows?.slice(0, 3) ?? null,
+              firstPairs: pairs.slice(0, 4),
+              ms: Math.round(performance.now() - started),
+            },
+            null,
+            1
+          );
+        } catch (err) {
+          out.textContent = `ERROR: ${err.message}`;
+        }
+      });
+    </script>
+  </body>
+</html>
